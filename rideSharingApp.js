@@ -52,16 +52,11 @@ class RideSharingApp {
             }
 
             const driversData = await response.json();
-            console.log(driversData);
             this.drivers = driversData.map(d =>
                 new Driver(d.id, d.name, 0, true)
             );
-
-
-            console.log("Fetched Drivers: ", this.drivers);
-
         } catch (error) {
-            console.error("Error fetching drivers: ", error.messsage);
+            console.error("Error fetching drivers: ", error.message);
         }
     }
 
@@ -83,8 +78,16 @@ class RideSharingApp {
 
     // Starting the RideSharing app
     async startApp(numRides) {
-        await this.fetchDrivers();
-        await this.processMultipleRides(numRides);
+        try {
+            if (typeof numRides !== "number") {
+                return console.log("Input should be number!")
+            }
+            console.log("App started successfully!");
+            await this.fetchDrivers();
+            await this.processMultipleRides(numRides);
+        } catch (error) {
+            console.error("Error starting the app:", error);
+        }
     }
 
     //Generating rides based on available users, drivers, and locations (Generator)
@@ -92,7 +95,7 @@ class RideSharingApp {
         for (let i = 0; i < numRides; i++) {
             // Error handling
             if (this.locations.length === 0 || this.users.length === 0 || this.drivers.length === 0) {
-                throw new Error("Users, drivers, or locations are not properly initialized.");
+                throw new Error("Users, drivers, or locations are not properly initialized!");
             }
 
             const pickUp = this.randomIndexMethod(this.locations);
@@ -119,29 +122,24 @@ class RideSharingApp {
 
         for await (let ride of rideGenerator) {
             const paymentSuccess = this.payment(ride);
+            const user = ride.user;
+            const driver = ride.driver;
 
-            if (paymentSuccess) {
-                const user = ride.user;
-                const driver = ride.driver;
-
+            if (driver.isVIP && !user.PremiumUser) { // VIP Drivers accept only Premium users
+                console.log(`${driver.name} is a VIP driver and cannot accept the ride from ${user.name}! Ride denied!`);
+            } else if (paymentSuccess) {
                 driver.isAvailable = false;
-                user.inRide = true;          
-                ride.status = "active";      
+                user.inRide = true;
+                ride.status = "active";
 
-                console.log(`${driver.name} has accepted the ride from ${user.name}`);
+                console.log(`${driver.name} has accepted the ride from ${user.name}!`);
 
                 user.addPoints(ride.distance, this.eventEmitter);
                 this.rideCompleted(ride);
             } else {
-                console.log(`${ride.user.name} failed to pay. Ride denied.`);
+                console.log(`${driver.name} has denied the ride from ${user.name}!`);
             }
         }
-    }
-
-    // Helper function to select a random index from an array
-    randomIndexMethod(array) {
-        const randomIndex = Math.floor(Math.random() * array.length);
-        return array[randomIndex];
     }
 
     //Payment logic (handles user payment and applies premium discount)
@@ -151,13 +149,13 @@ class RideSharingApp {
         const fare = ride.fare;
 
         const isValidPayment = this.paymentService.validatePayment(user.paymentDetails, fare);
-        
+
         if (isValidPayment) {
             this.paymentService.processPayment(user, fare, driver);
             console.log(`${user.name} has paid for the ride!`);
             return true;
         } else {
-            console.log(`${user.name} failed to pay. Ride denied.`);
+            console.log(`${user.name} failed to pay!`); //This message appears to both Users and drivers
             return false;
         }
     }
@@ -176,6 +174,12 @@ class RideSharingApp {
             console.log(`${driver.name} has completed the ride for ${user.name}!`);
             driver.addRaiting(raiting, this.eventEmitter);
         }, duration)
+    }
+
+    // Helper function to select a random index from an array
+    randomIndexMethod(array) {
+        const randomIndex = Math.floor(Math.random() * array.length);
+        return array[randomIndex];
     }
 }
 
@@ -314,17 +318,7 @@ class PaymentService {
 const usersData = [
     {
         id: "u1",
-        name: "Peter Peterson1",
-        paymentDetails: {
-            cardNumber: 1234567890123456,
-            expirationDate: 111,
-            balance: 1000.00
-        },
-        inRide: false,
-    },
-    {
-        id: "u2",
-        name: "Peter Peterson2",
+        name: "Olivia Martinez",
         paymentDetails: {
             cardNumber: 1234567890123456,
             expirationDate: 111,
@@ -333,8 +327,18 @@ const usersData = [
         inRide: false,
     },
     {
+        id: "u2",
+        name: "Benjamin Turner",
+        paymentDetails: {
+            cardNumber: 123456789012345,
+            expirationDate: 111,
+            balance: 1000
+        },
+        inRide: false,
+    },
+    {
         id: "u3",
-        name: "Peter Peterson3",
+        name: "Isabella Davis",
         paymentDetails: {
             cardNumber: 1234567890123456,
             expirationDate: 111,
@@ -344,7 +348,7 @@ const usersData = [
     },
     {
         id: "u4",
-        name: "Peter Peterson4",
+        name: "Alexander Wilson",
         paymentDetails: {
             cardNumber: 1234567890123456,
             expirationDate: 111,
@@ -354,7 +358,7 @@ const usersData = [
     },
     {
         id: "u5",
-        name: "Peter Peterson5",
+        name: "Mia Robertson",
         paymentDetails: {
             cardNumber: 1234567890123456,
             expirationDate: 111,
@@ -364,7 +368,7 @@ const usersData = [
     },
     {
         id: "u6",
-        name: "Peter Peterson6",
+        name: "Ethan Clark",
         paymentDetails: {
             cardNumber: 1234567890123456,
             expirationDate: 111,
@@ -374,7 +378,7 @@ const usersData = [
     },
     {
         id: "u7",
-        name: "Peter Peterson7",
+        name: "Harper Adams",
         paymentDetails: {
             cardNumber: 1234567890123456,
             expirationDate: 111,
@@ -384,7 +388,7 @@ const usersData = [
     },
     {
         id: "u8",
-        name: "Peter Peterson8",
+        name: "Lucas Thompson",
         paymentDetails: {
             cardNumber: 1234567890123456,
             expirationDate: 111,
@@ -394,7 +398,7 @@ const usersData = [
     },
     {
         id: "u9",
-        name: "Peter Peterson9",
+        name: "Charlotte Lewis",
         paymentDetails: {
             cardNumber: 1234567890123456,
             expirationDate: 111,
@@ -404,7 +408,7 @@ const usersData = [
     },
     {
         id: "u10",
-        name: "Peter Peterson10",
+        name: "Samuel Harris",
         paymentDetails: {
             cardNumber: 1234567890123456,
             expirationDate: 111,
@@ -433,9 +437,7 @@ const locations = [
 
 const paymentService = new PaymentService();
 const newApp = new RideSharingApp(paymentService, users, locations);
-console.log(newApp.startApp(5));
-
-
+newApp.startApp(10);
 
 
 
