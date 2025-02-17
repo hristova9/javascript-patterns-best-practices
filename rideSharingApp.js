@@ -14,7 +14,6 @@ class EventEmitter {
             this.listeners[event].forEach((callback) => callback(data))
         }
     }
-
 }
 
 // Singleton patten is applied to RideSharingApp class
@@ -82,9 +81,15 @@ class RideSharingApp {
             if (typeof numRides !== "number") {
                 return console.log("Input should be number!")
             }
+            if (numRides === 0) {
+                return console.log("No rides to process!");
+            } else if (numRides < 0) {
+                return console.log("Invalid number of rides!")
+            }
             console.log("App started successfully!");
             await this.fetchDrivers();
             await this.processMultipleRides(numRides);
+
         } catch (error) {
             console.error("Error starting the app:", error);
         }
@@ -97,12 +102,18 @@ class RideSharingApp {
             if (this.locations.length === 0 || this.users.length === 0 || this.drivers.length === 0) {
                 throw new Error("Users, drivers, or locations are not properly initialized!");
             }
-
+            
             const pickUp = this.randomIndexMethod(this.locations);
             const dropOff = this.randomIndexMethod(this.locations);
             const user = this.randomIndexMethod(this.users.filter(u => !u.inRide));
             const driver = this.randomIndexMethod(this.drivers.filter(d => d.isAvailable));
-
+            if(!user){
+                return console.log("No more users available in order to request a drive!");
+            }
+            if(!driver){
+                return console.log("No more drivers available in order to accept a drive!");
+            }
+            
             const ride = RideFactory.rideRequest(pickUp, dropOff, user, driver);
             this.rides.push(ride);
 
@@ -155,7 +166,7 @@ class RideSharingApp {
             console.log(`${user.name} has paid for the ride!`);
             return true;
         } else {
-            console.log(`${user.name} failed to pay!`); //This message appears to both Users and drivers
+            console.log(`${user.name} failed to pay!`); //If user has low balance or wrong card number
             return false;
         }
     }
@@ -298,11 +309,11 @@ class Ride {
     }
 }
 
-class PaymentService {
+// Payment Service class
+class PaymentService { 
     validatePayment(paymentDetails, fare) {
         const regex = /^\d{16}$/g;
         if (regex.exec(paymentDetails.cardNumber)
-            && paymentDetails.expirationDate > 20
             && paymentDetails.balance >= fare) {
             return true;
         }
@@ -314,111 +325,6 @@ class PaymentService {
         driver.profit += fare;
     }
 }
-
-const usersData = [
-    {
-        id: "u1",
-        name: "Olivia Martinez",
-        paymentDetails: {
-            cardNumber: 1234567890123456,
-            expirationDate: 111,
-            balance: 1000
-        },
-        inRide: false,
-    },
-    {
-        id: "u2",
-        name: "Benjamin Turner",
-        paymentDetails: {
-            cardNumber: 123456789012345,
-            expirationDate: 111,
-            balance: 1000
-        },
-        inRide: false,
-    },
-    {
-        id: "u3",
-        name: "Isabella Davis",
-        paymentDetails: {
-            cardNumber: 1234567890123456,
-            expirationDate: 111,
-            balance: 1000
-        },
-        inRide: false,
-    },
-    {
-        id: "u4",
-        name: "Alexander Wilson",
-        paymentDetails: {
-            cardNumber: 1234567890123456,
-            expirationDate: 111,
-            balance: 1000
-        },
-        inRide: false,
-    },
-    {
-        id: "u5",
-        name: "Mia Robertson",
-        paymentDetails: {
-            cardNumber: 1234567890123456,
-            expirationDate: 111,
-            balance: 1000
-        },
-        inRide: false,
-    },
-    {
-        id: "u6",
-        name: "Ethan Clark",
-        paymentDetails: {
-            cardNumber: 1234567890123456,
-            expirationDate: 111,
-            balance: 50
-        },
-        inRide: false
-    },
-    {
-        id: "u7",
-        name: "Harper Adams",
-        paymentDetails: {
-            cardNumber: 1234567890123456,
-            expirationDate: 111,
-            balance: 10
-        },
-        inRide: false,
-    },
-    {
-        id: "u8",
-        name: "Lucas Thompson",
-        paymentDetails: {
-            cardNumber: 1234567890123456,
-            expirationDate: 111,
-            balance: 1000
-        },
-        inRide: false,
-    },
-    {
-        id: "u9",
-        name: "Charlotte Lewis",
-        paymentDetails: {
-            cardNumber: 1234567890123456,
-            expirationDate: 111,
-            balance: 500
-        },
-        inRide: false,
-    },
-    {
-        id: "u10",
-        name: "Samuel Harris",
-        paymentDetails: {
-            cardNumber: 1234567890123456,
-            expirationDate: 111,
-            balance: 100
-        },
-        inRide: false,
-    },
-]
-
-const users = usersData.map(user => new User(user.id, user.name, user.paymentDetails, user.inRide, false));
 
 const locations = [
     "Location 1",
@@ -435,9 +341,135 @@ const locations = [
     "Location 12",
 ]
 
+const usersData = [
+    {
+        id: "u1",
+        name: "Olivia Martinez",
+        paymentDetails: {
+            cardNumber: 1234567890123456,
+            balance: 1000
+        },
+        inRide: false,
+    },
+    {
+        id: "u2",
+        name: "Benjamin Turner",
+        paymentDetails: {
+            cardNumber: 123456789012345,
+            balance: 1000
+        },
+        inRide: false,
+    },
+    {
+        id: "u3",
+        name: "Isabella Davis",
+        paymentDetails: {
+            cardNumber: 1234567890123456,
+            balance: 1000
+        },
+        inRide: false,
+    },
+    {
+        id: "u4",
+        name: "Alexander Wilson",
+        paymentDetails: {
+            cardNumber: 1234567890123456,
+            balance: 1000
+        },
+        inRide: false,
+    },
+    {
+        id: "u5",
+        name: "Mia Robertson",
+        paymentDetails: {
+            cardNumber: 1234567890123456,
+            balance: 1000
+        },
+        inRide: false,
+    },
+    {
+        id: "u6",
+        name: "Ethan Clark",
+        paymentDetails: {
+            cardNumber: 1234567890123456,
+            balance: 50
+        },
+        inRide: false
+    },
+    {
+        id: "u7",
+        name: "Harper Adams",
+        paymentDetails: {
+            cardNumber: 1234567890123456,
+            balance: 0 //low balance request will be failed
+        },
+        inRide: false,
+    },
+    {
+        id: "u8",
+        name: "Lucas Thompson",
+        paymentDetails: {
+            cardNumber: 1234567890123456,
+            balance: 1000
+        },
+        inRide: false,
+    },
+    {
+        id: "u9",
+        name: "Charlotte Lewis",
+        paymentDetails: {
+            cardNumber: 1234567890123456,
+            balance: 500
+        },
+        inRide: false,
+    },
+    {
+        id: "u10",
+        name: "Samuel Harris",
+        paymentDetails: {
+            cardNumber: 1234567890123456,
+            balance: 100
+        },
+        inRide: false,
+    },
+]
+const users = usersData.map(user => new User(user.id, user.name, user.paymentDetails, user.inRide, false));
+
+//No more users available in order to request a drive if you make more requests! - for tests
+// const onlyTwoUsers = [
+//     {
+//         id: "u1",
+//         name: "Olivia Martinez",
+//         paymentDetails: {
+//             cardNumber: 1234567890123456,
+//             balance: 1000
+//         },
+//         inRide: false,
+//     },
+//     {
+//         id: "u2",
+//         name: "Benjamin Turner",
+//         paymentDetails: {
+//             cardNumber: 1234567890123456,
+//             balance: 1000
+//         },
+//         inRide: false,
+//     }
+// ]
+// const users = onlyTwoUsers.map(user => new User(user.id, user.name, user.paymentDetails, user.inRide, false));
+
+
+
 const paymentService = new PaymentService();
 const newApp = new RideSharingApp(paymentService, users, locations);
-newApp.startApp(10);
+newApp.startApp(10); // The app should start successfully and make 10 requests
+// newApp.startApp("1"); // Input should be number!
+// newApp.startApp(0); // No rides to process!
+// newApp.startApp(-2); // Invalid number of rides!
+// newApp.startApp(1000); // Attempt to process a large number of rides
+
+
+
 
 
 
